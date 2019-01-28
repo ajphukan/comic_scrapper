@@ -5,7 +5,6 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 import img2pdf
 
-from multiprocessing.pool import Pool
 from time import sleep
 import os
 import requests
@@ -103,10 +102,7 @@ def download_comic(driver, urls , comic_coll = None):
             except Exception as e:
                 print("Exception Occur: ", e)
                 break
-            sleep(random.randint(5, 10))
-            # ch = input("Enter any character to continue")
-            # if ch == 'q':
-            #     break
+            sleep(random.randint(5, 10))  # Added Delay to prevent load on web server
             comic_name_folder = os.path.join(comic_coll,comic_name)
             comic_json[comic_name_folder] = {
             "comic_name": comic_name,
@@ -141,7 +137,7 @@ def download_comic_coll(driver, url):
 
     make_folder(comic_coll)
     comic_urls = list(map(lambda ele: ele.get_attribute("href"),driver.find_elements_by_css_selector(".listing > tbody > tr > td > a")))
-    # random.shuffle(comic_urls)
+    comic_urls.reverse() # Comics were downloading in reverse order 
     download_comic(driver, comic_urls, comic_coll)
 
 if __name__ == "__main__":
@@ -154,6 +150,5 @@ if __name__ == "__main__":
     prefs = {"profile.managed_default_content_settings.images": 2}
     chrome_options.add_experimental_option("prefs", prefs)
     chrome_options.headless = True
-    #driver = webdriver.Chrome(chrome_options=chrome_options)
     driver = webdriver.Chrome()
     download_comic_coll(driver, url)
