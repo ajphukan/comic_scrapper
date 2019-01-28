@@ -84,7 +84,13 @@ def get_comic_name_and_page_ls(driver, url):
     url = url.split('?')[0] + '?' + "&".join([matches[0],'quality=hq','readtype=1'])
     print(f"Opening url : {url}")
     driver.get(url)
-    comic_name = get_comic_name(driver)
+    try:
+        comic_name = get_comic_name(driver)
+    except Exception as e:
+        print("Exception Occur: ", e)
+        ch = input("Please Solve the Recaptcha then Press Enter: ")
+        comic_name = get_comic_name(driver)
+
     page_list = get_list_of_pages(driver)
     return comic_name , page_list
 
@@ -92,8 +98,15 @@ def download_comic(driver, urls , comic_coll = None):
     comic_json = {}
     if comic_coll:
         for url in urls:
-            comic_name, page_list = get_comic_name_and_page_ls(driver, url) 
-            sleep(random.randint(1, 5))   
+            try:
+                comic_name, page_list = get_comic_name_and_page_ls(driver, url)
+            except Exception as e:
+                print("Exception Occur: ", e)
+                break
+            sleep(random.randint(5, 10))
+            # ch = input("Enter any character to continue")
+            # if ch == 'q':
+            #     break
             comic_name_folder = os.path.join(comic_coll,comic_name)
             comic_json[comic_name_folder] = {
             "comic_name": comic_name,
@@ -117,6 +130,7 @@ def download_comic(driver, urls , comic_coll = None):
 def download_comic_coll(driver, url):
     driver.get(url)
     sleep(15)
+    # ch = input("Enter any character to continue")
     try:
         comic_coll = driver.find_element_by_css_selector(".barContent > div > a.bigChar").text
         print(f"Downloading your comic Collection {comic_coll}")
@@ -127,11 +141,11 @@ def download_comic_coll(driver, url):
 
     make_folder(comic_coll)
     comic_urls = list(map(lambda ele: ele.get_attribute("href"),driver.find_elements_by_css_selector(".listing > tbody > tr > td > a")))
-    random.shuffle(comic_urls)
+    # random.shuffle(comic_urls)
     download_comic(driver, comic_urls, comic_coll)
 
 if __name__ == "__main__":
-    url = "https://readcomiconline.to/Comic/Injustice-2"
+    url = "https://readcomiconline.to/Comic/Injustice-Ground-Zero"
     if not is_comic_base_folder(): # only in first run
         make_comic_folder()
     
@@ -139,6 +153,7 @@ if __name__ == "__main__":
     chrome_options = webdriver.ChromeOptions()
     prefs = {"profile.managed_default_content_settings.images": 2}
     chrome_options.add_experimental_option("prefs", prefs)
-    # chrome_options.headless = True
-    driver = webdriver.Chrome(chrome_options=chrome_options)
+    chrome_options.headless = True
+    #driver = webdriver.Chrome(chrome_options=chrome_options)
+    driver = webdriver.Chrome()
     download_comic_coll(driver, url)
